@@ -128,6 +128,76 @@
           }
         }
       }
+    },
+    "bx-design": {
+      "projectType": "library",
+      "root": "projects/bx-design",
+      "sourceRoot": "projects/bx-design/src",
+      "prefix": "bx",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss",
+          "skipTests": true
+        },
+        "@schematics/angular:class": {
+          "skipTests": true
+        },
+        "@schematics/angular:directive": {
+          "skipTests": true
+        },
+        "@schematics/angular:guard": {
+          "skipTests": true
+        },
+        "@schematics/angular:interceptor": {
+          "skipTests": true
+        },
+        "@schematics/angular:pipe": {
+          "skipTests": true
+        },
+        "@schematics/angular:resolver": {
+          "skipTests": true
+        },
+        "@schematics/angular:service": {
+          "skipTests": true
+        }
+      },
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/bx-design/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/bx-design/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/bx-design/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/bx-design/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/bx-design/**/*.ts",
+              "projects/bx-design/**/*.html"
+            ],
+            "eslintConfig": "projects/bx-design/eslint.config.js"
+          }
+        }
+      }
     }
   },
   "cli": {
