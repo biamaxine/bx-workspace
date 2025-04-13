@@ -1,0 +1,163 @@
+@use 'sass:meta';
+@use 'sass:list';
+@use 'sass:math';
+@use 'sass:map';
+
+@use 'errors' as error;
+
+@function _validate($this, $property-name, $context) {
+  @if $property-name == null {
+    @return error.RequiredArgumentMissing(
+      '$property-name in validate.#{$this}() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($property-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$property-name in validate.#{$this}() must be of type string.',
+    );
+  }
+
+  @if $context == null {
+    @return error.RequiredArgumentMissing(
+      '$context in validate.#{$this}() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($context) != 'string' {
+    @return error.InvalidArgumentType(
+      '$context in validate.#{$this}() must be of type string.',
+    );
+  }
+
+  @return null;
+}
+
+@function saturation($saturation, $property-name, $context) {
+  $validate: _validate('saturation', $property-name, $context);
+
+  @if $saturation == null {
+    @return error.RequiredArgumentMissing(
+      '#{$property-name} in #{$context} cannot be null.'
+    );
+  }
+  @if meta.type-of($saturation) != 'number' {
+    @return error.InvalidArgumentType(
+      '#{$property-name} in #{$context} must be of type number.',
+    );
+  }
+  @if unit($saturation) != '%' {
+    @return error.InvalidArgumentUnit(
+      '#{$property-name} of type number in #{$context} must be a percentage.',
+    );
+  }
+  @if $saturation < 0% or $saturation > 100% {
+    @return error.ArgumentOutOfRange(
+      '#{$property-name} of type number in #{$context} must be between 0% and 100%.',
+    );
+  }
+
+  @return $saturation;
+}
+
+@function hue($hue, $property-name, $context) {
+  $validate: _validate('hue', $property-name, $context);
+
+  @if $hue == null {
+    @return error.RequiredArgumentMissing(
+      '#{$property-name} in #{$context} cannot be null.',
+    );
+  }
+  @if meta.type-of($hue) != 'number' {
+    @return error.InvalidArgumentType(
+      '#{$property-name} in #{$context} must be of type number.',
+    );
+  }
+  @if math.unit($hue) != '' {
+    @return error.InvalidArgumentUnit(
+      '#{$property-name} of type number in #{$context} cannot have a specific unit.',
+    );
+  }
+  @if $hue < 0 or $hue > 360 {
+    @return error.ArgumentOutOfRange(
+      '#{$property-name} of type number in #{$context} must be between 0 and 360.',
+    );
+  }
+
+  @return $hue;
+}
+
+@function lightness($lightness, $property-name, $context) {
+  $validate: _validate('lightness', $property-name, $context);
+
+  @if $lightness == null {
+    @return error.RequiredArgumentMissing(
+      '#{$property-name} in #{$context} cannot be null.',
+    );
+  }
+  @if meta.type-of($lightness) != 'number' {
+    @return error.InvalidArgumentType(
+      '#{$property-name} in #{$context} must be of type number.',
+    );
+  }
+  @if math.unit($lightness) != '' {
+    @return error.InvalidArgumentUnit(
+      '#{$property-name} of type number in #{$context} cannot have a specific unit.',
+    );
+  }
+  @if $lightness < 100 or $lightness > 900 or $lightness % 100 != 0 {
+    @return error.ArgumentOutOfRange(
+      '#{$property-name} of type number in #{$context} must be a multiply of 100 between 100 and 900.',
+    );
+  }
+
+  @return $lightness;
+}
+
+@function lightnessOrColor($lightness, $property-name, $context) {
+  $validate: _validate('lightnessOrColor', $property-name, $context);
+
+  @if meta.type-of($lightness) != 'color' {
+    @return lightness($lightness, $property-name, $context);
+  }
+
+  @return $lightness;
+}
+
+@function contrast-colors($contrast-colors, $property-name, $context) {
+  $validate: _validate('contrast-colors', $property-name, $context);
+
+  @if $contrast-colors == null {
+    @return error.RequiredArgumentMissing(
+      '#{$property-name} in #{$context} cannot be null.',
+    );
+  }
+  @if meta.type-of($contrast-colors) != 'map' {
+    @return error.InvalidArgumentType(
+      '#{$property-name} in #{$context} must be a map: ("light-contrast": color or number, "dark-contrast": color or number)',
+    );
+  }
+  @if not map.has-key($contrast-colors, 'light-contrast') {
+    @return error.InvalidArgumentType(
+      '#{$property-name} in #{$context} must be a map: ("light-contrast": color or number, "dark-contrast": color or number)',
+    );
+  }
+  @if not map.has-key($contrast-colors, 'dark-contrast') {
+    @return error.InvalidArgumentType(
+      '#{$property-name} in #{$context} must be a map: ("light-contrast": color or number, "dark-contrast": color or number)',
+    );
+  }
+
+  $light-contrast: lightnessOrColor(
+    map.get($contrast-colors, 'light-contrast'),
+    '#{$property-name}.light-contrast',
+    $context,
+  );
+  $dark-contrast: lightnessOrColor(
+    map.get($contrast-colors, 'dark-contrast'),
+    '#{$property-name}.dark-contrast',
+    $context,
+  );
+
+  @return $contrast-colors;
+}

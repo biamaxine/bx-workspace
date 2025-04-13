@@ -1,0 +1,389 @@
+@use 'sass:meta';
+@use 'sass:map';
+@use 'sass:list';
+@use 'errors' as error;
+@use 'palette.validate' as validate;
+
+$map: ();
+$map: map.set($map, 'primary', ());
+$map: map.set($map, 'accent', ());
+$map: map.set($map, 'warn', ());
+
+$styles: ();
+$styles: map.set($styles, 'bg', background-color);
+$styles: map.set($styles, 'txt', color);
+$styles: map.set($styles, 'bord', border-color);
+
+$default-saturation: 25%;
+$default-contrast-colors: ('light-contrast': 900, 'dark-contrast': 100);
+$default-start-contrast: 500;
+
+@function set-default-saturation($saturation) {
+  $saturation: validate.saturation(
+    $saturation,
+    '$saturation',
+    'bx-palette.set-default-saturation()',
+  );
+
+  $default-saturation: $saturation !global;
+  @return $saturation;
+}
+
+@function set-default-contrast-colors($contrast-colors) {
+  $contrast-colors: validate.contrast-colors(
+    $contrast-colors,
+    '$contrast-colors',
+    'bx-palette.set-default-contrast-colors()',
+  );
+
+  $default-contrast-colors: $contrast-colors !global;
+  @return $contrast-colors;
+}
+
+@function set-default-start-contrast($start-contrast) {
+  $start-contrast: validate.lightness(
+    $start-contrast,
+    '$start-contrast',
+    'bx-palette.set-default-start-contrast()',
+  );
+
+  $default-start-contrast: $start-contrast !global;
+  @return $start-contrast;
+}
+
+$default-options: (
+  'saturation': $default-saturation,
+  'contrast-colors': $default-contrast-colors,
+  'start-contrast': $default-start-contrast,
+);
+@function set($palette-name, $hue, $options: $default-options) {
+  @if $palette-name == null {
+    @return error.RequiredArgumentMissing(
+      '$palette-name in bx-palette.set() cannot be null.'
+    );
+  }
+
+  @if meta.type-of($palette-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$palette-name in bx-palette.set() must be of type string.',
+    );
+  }
+
+  @if not map.has-key($map, $palette-name) {
+    @warn 'The $palette-name "#{$palette-name}" is not recommended. Use "primary", "accent" and "warn".';
+  }
+
+  $hue: validate.hue($hue, '$hue', 'bx-palette.set()');
+
+  @if $options != null and $options != $default-options {
+    @if not map.has-key($options, 'saturation') {
+      $options: map.set($options, 'saturation', $default-saturation);
+    } @else {
+      $saturation: validate.saturation(
+        map.get($options, 'saturation'),
+        '$options.saturation',
+        'bx-palette.set()',
+      );
+    }
+
+    @if not map.has-key($options, 'contrast-colors') {
+      $options: map.set($options, 'contrast-colors', $default-contrast-colors);
+    } @else {
+      $contrast-colors: validate.contrast-colors(
+        map.get($options, 'contrast-colors'),
+        '$options.contrast-colors',
+        'bx-palette.set()',
+      );
+    }
+
+    @if not map.has-key($options, 'start-contrast') {
+      $options: map.set($options, 'start-contrast', $default-start-contrast);
+    } @else {
+      $start-contrast: validate.lightness(
+        map.get($options, 'start-contrast'),
+        '$options.start-contrast',
+        'bx-palette.set()',
+      );
+    }
+  }
+
+  $saturation: map.get($options, 'saturation');
+  $start-contrast: map.get($options, 'start-contrast');
+  $contrast-colors: map.get($options, 'contrast-colors');
+
+  $light-contrast: map.get($contrast-colors, 'light-contrast');
+  @if meta.type-of($light-contrast) != color {
+    $light-contrast: hsl(
+      $hue,
+      $saturation,
+      calc(100% - ($light-contrast * 1% / 10)),
+    );
+  }
+
+  $dark-contrast: map.get($contrast-colors, 'dark-contrast');
+  @if meta.type-of($dark-contrast) != color {
+    $dark-contrast: hsl(
+      $hue,
+      $saturation,
+      calc(100% - ($dark-contrast * 1% / 10)),
+    );
+  }
+
+  $palette: ();
+  $palette-contrast: ();
+  @for $i from 1 through 9 {
+    $lightness-num: $i * 100;
+    $lightness: calc(100 - $i * 10);
+
+    $palette: map.set(
+      $palette,
+      $lightness-num,
+      hsl($hue, $saturation, $lightness * 1%),
+    );
+
+    @if $lightness-num > $start-contrast {
+      $palette-contrast: map.set(
+        $palette-contrast,
+        $lightness-num,
+        $dark-contrast,
+      );
+    } @else {
+      $palette-contrast: map.set(
+        $palette-contrast,
+        $lightness-num,
+        $light-contrast,
+      );
+    }
+  }
+
+  $palette: map.set($palette, 'contrast', $palette-contrast);
+  $map: map.set($map, $palette-name, $palette) !global;
+  @return $palette;
+}
+
+@function get($palette-name) {
+  @if $palette-name == null {
+    @return error.RequiredArgumentMissing(
+      '$palette-name in bx-palette.get() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($palette-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$palette-name in bx-palette.get() must be of type string.',
+    );
+  }
+
+  @if not map.has-key($map, $palette-name) {
+    @return error.PaletteNotFound(
+      'The $palette "#{$palette-name}" was not found in Palettes Map.',
+    );
+  }
+
+  @return map.get($map, $palette-name);
+}
+
+@function get-color($palette-name, $lightness, $contrast: false) {
+  @if $palette-name == null {
+    @return error.RequiredArgumentMissing(
+      '$palette-name in bx-palette.get-color() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($palette-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$palette-name in bx-palette.get-color() must be of type string.',
+    );
+  }
+
+  $lightness: validate.lightness(
+    $lightness,
+    '$lightness',
+    'bx-palette.get-color()'
+  );
+
+  $palette: get($palette-name);
+
+  @if $contrast == null or meta.type-of($contrast) != 'bool' {
+    @warn '$contrast in bx-palette.get-color() must be of type bool. Using default value: false.';
+    $contrast: false;
+  }
+
+  @if $contrast {
+    $palette: map.get($palette, 'contrast');
+  }
+
+  @return map.get($palette, $lightness);
+}
+
+@function get-color-if-palette($palette-name, $lightness, $contrast: false) {
+  @if $palette-name == null {
+    @return error.RequiredArgumentMissing(
+      '$palette-name in bx-palette.get-color() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($palette-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$palette-name in bx-palette.get-color() must be of type string.',
+    );
+  }
+
+  $lightness: validate.lightness(
+    $lightness,
+    '$lightness',
+    'bx-palette.get-color()'
+  );
+
+  @if map.has-key($map, $palette-name) {
+    @return get-color($palette-name, $lightness, $contrast);
+  }
+
+  @return null;
+}
+
+@function add-style($style-name, $style) {
+  @if $style-name == null {
+    @return error.RequiredArgumentMissing(
+      '$style-name in bx-palete.add-style() connot be null.',
+    );
+  }
+
+  @if meta.type-of($style-name) != string {
+    @return error.InvalidArgumenteType(
+      '$style-name in bx-palette.add-style() must be of type string.',
+    );
+  }
+
+  @if $style == null {
+    @return error.RequiredArgumentMissing(
+      '$style in bx-palette.add-style() connot be null.',
+    );
+  }
+
+  @if meta.type-of($style) != string {
+    @return error.InvalidArgumenteType(
+      '$style in bx-palette.add-style() must be of type string.',
+    );
+  }
+
+  $styles: map.set($styles, $style-name, $style) !global;
+  @return $styles;
+}
+
+@mixin _create-class($style, $color, $interactions) {
+  #{$style}: $color;
+  @each $interaction in $interactions {
+    &-event:#{$interaction},
+    &-#{$interaction}:#{$interaction} { #{$style}: $color; }
+  }
+}
+
+$create-classes-default-options: (
+  'exclude-lightness': (200, 400, 600, 800),
+  'opacities': (.25, .5, .75),
+  'interactions': ('hover', 'focus', 'disable')
+);
+
+@mixin create-classes($options: $create-classes-default-options) {
+  $defaults: (
+    'exclude-lightness': (
+      'type': number,
+    ),
+    'opacities': (
+      'type': number,
+    ),
+    'interactions': (
+      'type': string,
+      'validates': ('hover', 'focus', 'active', 'disable', 'visited'),
+    ),
+  );
+
+  $options-result: ();
+  @each $default-property, $default-config in $defaults {
+    @if $options != null and map.has-key($options, $default-property) {
+      $option: map.get($options, $default-property);
+
+      @if $option != null {
+        $default-type: map.get($default-config, 'type');
+        @if (
+          meta.type-of($option) != list and
+          meta.type-of($option) != $default-type
+        ) {
+          @error error.InvalidArgumentType(
+            '$options.#{$default-property} in bx-palette.create-classes() must be of type list.',
+          );
+        }
+
+        @if map.has-key($default-config, 'validates') {
+          $validates: map.get($default-config, 'validates');
+          @each $option-property in $option {
+            @if not list.index($validates, $option-property) {
+              @error error.StringRestrictionBreaking(
+                '$options.#{$default-property} in bx-palette.create-classes() must have only the following values: #{$validates}.',
+              );
+            }
+          }
+        }
+
+        $options-result: map.set($options-result, $default-property, $option);
+      } @else {
+        $options-result: map.set($options-result, $default-property, ());
+      }
+    } @else {
+      @debug $default-property;
+      $options-result: map.set(
+        $options-result,
+        $default-property,
+        map.get($create-classes-default-options, $default-property)
+      )
+    }
+  }
+
+  $opacities: map.get($options-result, 'opacities');
+  $exclude-lightness: map.get($options-result, 'exclude-lightness');
+  $interactions: map.get($options-result, 'interactions');
+
+  @each $style-name, $style in $styles {
+    .#{$style-name}-transparent { #{$style}: transparent; }
+
+    @each $palette-name, $palette in $map {
+      @if meta.type-of($palette) == map {
+        @for $i from 1 through 9 {
+          $lightness: $i * 100;
+
+          @if not list.index($exclude-lightness, $lightness) {
+            $color: map.get($palette, $lightness);
+            $contrast: map.get(map.get($palette, 'contrast'), $lightness);
+
+            .#{$style-name}-#{$palette-name}-#{$lightness} {
+              @include _create-class(
+                $style,
+                $color,
+                $interactions,
+              );
+
+              &-contrast {
+                @include _create-class(
+                  $style,
+                  $contrast,
+                  $interactions,
+                );
+              }
+
+              @each $opacity in $opacities {
+                &-opacity-#{$opacity * 100} {
+                  #{$style}: rgba($color, 1 - $opacity);
+                }
+
+                &-contrast-opacity-#{$opacity * 100} {
+                  #{$style}: rgba($contrast, 1 - $opacity);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

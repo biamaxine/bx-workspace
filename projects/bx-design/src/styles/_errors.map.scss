@@ -1,0 +1,43 @@
+$map: (
+  // Type Issue
+  'TYP.001': (
+    label: 'RequiredArgumentMissing',
+    message: 'A required argument was not provided.',
+  ),
+  'TYP.002': (
+    label: 'InvalidArgumentType',
+    message: 'A provided argument does not match the expected type.',
+  ),
+  // Number Issue
+  'NUM.001': (
+    label: 'InvalidArgumentUnit',
+    message: 'A provided argument does not match the expected unit.',
+  ),
+  'NUM.002': (
+    label: 'ArgumentOutOfRange',
+    message: 'A provided argument of type number is not in the expected range.',
+  ),
+  // String Issue
+  'STR.001': (
+    label: 'StringRestrictionBreaking',
+    message: 'A provided argument of type string does not match the allowed values.',
+  ),
+  'STR.002': (
+    label: 'CannotBeEmpty',
+    message: 'A provided argument of type string cannot be a empty string.',
+  ),
+  // Palettes Issues
+  'PLT.001': (
+    label: 'PaletteNotFound',
+    message: 'The required palette was not found in Palettes Map.',
+  ),
+  // Typographies Issues
+  'TPH.001': (
+    label: 'TypographyNotFound',
+    message: 'The required typography was not found in Typographies Map.',
+  ),
+  'TPH.002': (
+    label: 'TypographyClassNotFound',
+    message: 'The required class-name was not found in typography.',
+  )
+);

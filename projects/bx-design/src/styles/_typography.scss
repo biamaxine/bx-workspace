@@ -1,0 +1,326 @@
+@use 'sass:meta';
+@use 'sass:map';
+@use 'sass:math';
+@use 'sass:string';
+
+@use 'errors' as error;
+
+$map: ();
+
+@function set($typography-name, $typography) {
+  @if $typography-name == null {
+    @return error.RequiredArgumentMissing(
+      '$typography-name in typography.set() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($typography-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$typography-name in typography.set() must be of type string.',
+    );
+  }
+
+  @if $typography-name == '' {
+    @return error.CannotBeEmpty(
+      '$typography-name of type string in typography.set() cannot be a empty string.',
+    );
+  }
+
+  $invalid-chars: " @#$&%*+=^~`(){}[]<>:;,.!?|/\"'";
+  @each $char in string.split($invalid-chars, '') {
+    // @debug string.index($typography-name, $char);
+    @if string.index($typography-name, $char) != null {
+      @return error.StringRestrictionBreaking(
+        '$typography-name of type string in typography.set() cannot have spaces other then the following characters: [#{$invalid-chars} ].',
+      );
+    }
+  }
+
+  @if $typography == null {
+    @return error.RequiredArgumentMissing(
+      '$typography in typography.set() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($typography) != 'map' {
+    @return error.InvalidArgumentType(
+      '$typography in typography.set() must be a map.',
+    );
+  }
+
+  @if not map.has-key($typography, 'font-family') {
+    @return error.RequiredArgumentMissing(
+      '$typography.font-family in typography.set() cannot be null.',
+    );
+  }
+
+  // $defaults: (
+  //   'fong-size': ('required': true, 'type': 'number'),
+  //   'font-weight': (
+  //     'required': false,
+  //     'type': 'number',
+  //     'validates': (100, 200, 300, 400, 500, 600, 700, 800, 900, 1000),
+  //   ),
+  //   'text-decoration': ('required': false, 'type': 'string'),
+  //   'line-height': ('required': false, 'type': 'number', 'unit': 'less'),
+  //   'letter-spacing': ('required': false, 'type': 'number'),
+  // );
+  @each $class-name, $class-map in $typography {
+    @if $class-name == 'font-family' {
+      @if meta.type-of($class-map) != 'string' {
+        @return error.InvalidArgumentType(
+          '$typography.font-family in typography.set() must be of type string.',
+        );
+      }
+    }
+
+    @else {
+      @if meta.type-of($class-name) != 'string' {
+        @return error.InvalidArgumentType(
+          '$typography.#{$class-name} in typography.set() must be of type string.',
+        );
+      }
+
+      @each $char in string.split($invalid-chars, '') {
+        @if string.index($class-name, $char) != null {
+          @return error.StringRestrictionBreaking(
+            '$typography.#{$class-name} of type string in typography.set() cannot have spaces other then the following characters: [#{$invalid-chars} ].',
+          );
+        }
+      }
+
+      @if meta.type-of($class-map) != 'map' {
+        @return error.InvalidArgumentType(
+          '$typography.#{$class-name} in typography.set() must be a map.'
+        );
+      }
+
+      @if not map.has-key($class-map, 'font-size') {
+        @return error.RequiredArgumentMissing(
+          '$typography.#{$class-name}.font-size in typography.set() cannot be null.',
+        );
+      }
+
+      @if meta.type-of(map.get($class-map, 'font-size')) != 'number' {
+        @return error.InvalidArgumentType(
+          '$typography.#{$class-name}.font-size in typography.set() must be of type number.',
+        );
+      }
+
+      @if map.has-key($class-map, 'font-weight') {
+        $font-weight: map.get($class-map, 'font-weight');
+        @if meta.type-of($font-weight) != 'number' {
+          @return error.InvalidArgumentType(
+            '$typography.#{$class-name}.font-weight in typography.set() must be of type number.',
+          );
+        }
+
+        @if (
+          $font-weight < 100 or
+          $font-weight > 1000 or
+          $font-weight % 100 != 0
+        ) {
+          @return error.ArgumentOutOfRange(
+            '$typography.#{$class-name}.font-weight in typography.set() must be a multiple of 100 between 100 and 1000.',
+          );
+        }
+      } @else {
+        $class-map: map.set($class-map, 'font-weight', 400);
+      }
+
+      @if map.has-key($class-map, 'text-decoration') {
+        @if meta.type-of(map.get($class-map, 'text-decoration')) != 'string' {
+          @return error.InvalidArgumentType(
+            '$typography.#{$class-name}.text-decoration must be of type string.',
+          );
+        }
+      } @else {
+        $class-map: map.set($class-map, 'text-decoration', 'none');
+      }
+
+      @if map.has-key($class-map, 'line-height') {
+        $line-height: map.get($class-map, 'line-height');
+
+        @if meta.type-of($line-height) != number {
+          @return error.InvalidArgumentType(
+            '$typography.#{$class-name}.line-height must be of type number.',
+          );
+        }
+
+        @if math.unit($line-height) != '' {
+          @return error.InvalidArgumentUnit(
+            '$typography.#{$class-name}.line-height cannot have a specific unit.',
+          );
+        }
+      } @else {
+        $class-map: map.set($class-map, 'line-height', 1);
+      }
+
+      @if map.has-key($class-map, 'letter-spacing') {
+        @if meta.type-of(map.get($class-map, 'letter-spacing')) != number {
+          @return error.InvalidArgumentType(
+            '$typography.#{$class-name}.letter-spacing must be of type number.',
+          );
+        }
+      } @else {
+        $class-map: map.set($class-map, 'letter-spacing', 0);
+      }
+
+      $typography: map.set($typography, $class-name, $class-map);
+    }
+  }
+
+  $map: map.set($map, $typography-name, $typography) !global;
+  @return $typography;
+}
+
+@function get($typography-name) {
+  @if $typography-name == null {
+    @return error.RequiredArgumentMissing(
+      '$typography-name in typography.get() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($typography-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$typography-name in typography.get() must be of type string.',
+    );
+  }
+
+  @if not map.has-key($map, $typography-name) {
+    @return error.TypographyNotFound(
+      'The $typography "#{$typography-name}" was not found in Typographies Map.',
+    );
+  }
+
+  @return map.get($map, $typography-name);
+}
+
+@function get-class-map($typography-name, $class-name) {
+  @if $typography-name == null {
+    @return error.RequiredArgumentMissing(
+      '$typography-name in typography.get-class-map() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($typography-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$typography-name in typography.get-class-map() must be of type string.',
+    );
+  }
+
+  @if $class-name == null {
+    @return error.RequiredArgumentMissing(
+      '$class-name in typography.get-class-map() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($class-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$class-name in typography.get-class-map() must be of type string.'
+    );
+  }
+
+  @if $class-name == 'font-family' {
+    @return error.StringRestrictionBreaking(
+      '$class-name in typography.get-class-map() cannot be "font-family". Use typography.get-font-family($typography-name).',
+    );
+  }
+
+  $typography: get($typography-name);
+
+  @if not map.has-key($typography, $class-name) {
+    @return error.TypographyClassNotFound(
+      'The $class-name "#{$class-name}" was not found in $typography: "#{$typography-name}".'
+    );
+  }
+
+  @return map.get($typography, $class-name);
+}
+
+@function get-class-map-if-typography($typography-name, $class-name) {
+  @if $typography-name == null {
+    @return error.RequiredArgumentMissing(
+      '$typography-name in typography.get-class-map-if-typography() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($typography-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$typography-name in typography.get-class-map-if-typography() must be of type string.',
+    );
+  }
+
+  @if $class-name == null {
+    @return error.RequiredArgumentMissing(
+      '$class-name in typography.get-class-map-if-typography() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($class-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$class-name in typography.get-class-map-if-typography() must be of type string.'
+    );
+  }
+
+  @if $class-name == 'font-family' {
+    @return error.StringRestrictionBreaking(
+      '$class-name in typography.get-class-map-if-typography() cannot be "font-family". Use typography.get-font-family($typography-name).',
+    );
+  }
+
+  @if map.has-key($map, $typography-name) {
+    @return get-class-map($typography-name, $class-name);
+  }
+
+  @return null;
+}
+
+@function get-font-family($typography-name) {
+  @if $typography-name == null {
+    @return error.RequiredArgumentMissing(
+      '$typography-name in typography.font-size() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($typography-name) != 'string' {
+    @return error.InvalidArgumentType(
+      '$typography-name in typography.get-font-family() must be of type string.',
+    );
+  }
+
+  $typography: get($typography-name);
+
+  @return map.get($typography, 'font-family');
+}
+
+@mixin create-classes($typography-name) {
+  @if $typography-name == null {
+    @error error.RequiredArgumentMissing(
+      '$typography-name in typography.create-classes() cannot be null.',
+    );
+  }
+
+  @if meta.type-of($typography-name) != 'string' {
+    @error error.InvalidArgumentType(
+      '$typography-name in typography.create-classes() must be of type string.',
+    );
+  }
+
+  $typography: get($typography-name);
+  $font-family: get-font-family($typography-name);
+
+  .#{$typography-name} {
+    @each $class-name, $class-map in $typography {
+      @if $class-name != 'font-family' {
+        &-#{$class-name} {
+          font-family: $font-family;
+
+          @each $style-name, $style in $class-map {
+            #{$style-name}: $style;
+          }
+        }
+      }
+    }
+  }
+}

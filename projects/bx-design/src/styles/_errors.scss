@@ -1,0 +1,78 @@
+@use 'sass:meta';
+@use 'sass:list';
+@use 'sass:map';
+
+@use 'errors.map' as errors;
+
+@function throw($err-code, $message: null) {
+  // verificando se o código de erro foi fornecido
+  @if $err-code == null {
+    $err-code: 'TYP.001';
+    $message: '$err-code in error.throw() cannot be null.';
+  }
+
+  // se sim, verificando se é do tipo string
+  @else if meta.type-of($err-code) != 'string' {
+    $err-code: 'TYP.002';
+    $message: '$err-code in error.throw() must be of type string.';
+  }
+
+  // se sim, verificando se é um código de erro válido.
+  @else if not map.has-key(errors.$map, $err-code) {
+    $err-code: 'STR.001';
+    $message: '$err-code in error.throw() must be a valid Error Code. Avaliable Error Codes:';
+
+    @each $code, $err in errors.$map {
+      $message: $message + ' #{$code};';
+    }
+  }
+
+  @else if $message != null {
+    @if meta.type-of($message) != string {
+      $err-code: 'TYP.002';
+      $message: '$err-code in error.throw()'
+    }
+  }
+
+  $error: map.get(errors.$map, $err-code);
+  $error-label: map.get($error, 'label');
+  $error-message: if($message != null, $message, map.get($error, 'message'));
+
+  @error 'ERROR #{$err-code} [#{$error-label}]: #{$error-message}';
+}
+
+@function RequiredArgumentMissing($message: null) {
+  @return throw('TYP.001', $message);
+}
+
+@function InvalidArgumentType($message: null) {
+  @return throw('TYP.002', $message);
+}
+
+@function ArgumentOutOfRange($message: null) {
+  @return throw('NUM.001', $message);
+}
+
+@function InvalidArgumentUnit($message: null) {
+  @return throw('NUM.002', $message);
+}
+
+@function StringRestrictionBreaking($message: null) {
+  @return throw('STR.001', $message);
+}
+
+@function CannotBeEmpty($message: null) {
+  @return throw('STR.002', $message);
+}
+
+@function PaletteNotFound($message: null) {
+  @return throw('PLT.001', $message);
+}
+
+@function TypographyNotFound($message: null) {
+  @return throw('TPH.001', $message);
+}
+
+@function TypographyClassNotFound($message: null) {
+  @return throw('TPH.002', $message);
+}
