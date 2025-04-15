@@ -1,0 +1,25 @@
+<label class="bx-form-field-container">
+  @if (options().label) {
+    {{ options().label }}
+  }
+  <div class="bx-form-field-container">
+    @if (options().ico) {
+      <i class="material-icons"> {{ options().ico }} </i>
+    }
+    <input
+      class="bx-form-field-input"
+      [type]="type"
+      [placeholder]="options().placeholder ?? ''"
+      [(ngModel)]="inputValue"
+      (keyup)="onKeyup($event)"
+      (focus)="onTouched && onTouched()"
+    >
+  </div>
+</label>
+@if (error()) {
+  <div class="bx-form-field-error">
+    <i class="material-icons"> error </i>
+    <p class="bx-form-field-error-text"> {{ error() }} </p>
+  </div>
+}
+

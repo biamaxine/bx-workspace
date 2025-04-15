@@ -11,11 +11,12 @@ module.exports = tseslint.config(
     plugins: { prettier },
     rules: {
       'prettier/prettier': 'error',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@angular-eslint/directive-selector': [
         'error',
         {
           type: 'attribute',
-          prefix: 'lib',
+          prefix: 'bx',
           style: 'camelCase',
         },
       ],
@@ -23,7 +24,7 @@ module.exports = tseslint.config(
         'error',
         {
           type: 'element',
-          prefix: 'lib',
+          prefix: 'bx',
           style: 'kebab-case',
         },
       ],
