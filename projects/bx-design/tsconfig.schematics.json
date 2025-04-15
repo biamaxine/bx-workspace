@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "lib": [
-      "es2018",
+      "ES2022",
       "dom"
     ],
     "declaration": true,
@@ -15,12 +15,12 @@
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "rootDir": "schematics",
-    "outDir": "../../dist/my-lib/schematics",
+    "outDir": "../../dist/bx-design/schematics",
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
     "sourceMap": true,
     "strictNullChecks": true,
-    "target": "es6",
+    "target": "ES2022",
     "types": [
       "jasmine",
       "node"
