@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "SchematicsBxConfigNgAdd",
+  "title": "BxDesign Config ng-add Schema",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Name of the target project",
+      "$default": {
+        "$source": "projectName"
+      }
+    },
+  }
+}
