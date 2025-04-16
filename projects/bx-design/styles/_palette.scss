@@ -387,3 +387,9 @@ $create-classes-default-options: (
     }
   }
 }
+
+@include create-classes((
+  'exclude-lightness': (200, 300, 400, 600, 700, 800),
+  'opacities': (.5),
+  'interactions': ('visited', 'active')
+));
